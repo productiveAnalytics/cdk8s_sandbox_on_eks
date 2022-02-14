@@ -4,6 +4,11 @@ Kubernetes development with cdk8s on AWS EKS.
 
 - Refer: EKSctl to deploy EKS cluster on AWS. Checkout: https://github.com/productiveAnalytics/EKS-cluster/blob/master/eks_cluster_using_eksctl_on_mac.sh
 
+## CDK8S Environment variables
+export CDK8S_ENV_NAME='sbx'
+export CDK8S_PREFIX='cdk8s-on-eks'
+export CDK8S_NAMESPACE="cdk8s-eks-${CDK8S_ENV_NAME}"
+
 ## Setup cdk8s:
 
 Install cdk8s
@@ -66,6 +71,22 @@ Other useful commands:
 ```
 cdk8s synth
 ```
+
+## Ensure that namespace and fargate profile are created
+
+### Create namespace
+```
+kubectl create namespace ${CDK8S_NAMESPACE}
+```
+OR
+Use KubeCtl with JSON: ```kubectl apply -f properties/namespace_cdk8s-eks-sbx.json```
+
+### Create Fargate Profile
+eksctl create fargateprofile \
+--namespace ${CDK8S_NAMESPACE} \
+--name fp-cdk8s-${CDK8S_ENV_NAME} \
+--cluster laap-eks-ue1-linear-cluster-sbx \
+--labels app=${CDK8S_PREFIX},environment=${CDK8S_ENV_NAME},language='typescript'
 
 ## Deploy Kubernetes YAML
 ```
