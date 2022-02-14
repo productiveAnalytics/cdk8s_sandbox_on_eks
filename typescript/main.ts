@@ -4,6 +4,12 @@ import { App, Chart, ChartProps } from 'cdk8s';
 // imported constructs
 import { KubeDeployment, KubeService, IntOrString } from './imports/k8s';
 
+// REPLACE name of environment as per AWS account
+const K8S_ENV = 'sbx'; // environment = { sbx, dev, test, prod }
+
+const K8S_NAMESPACE = 'default'; // 'cdk8s-eks-'+K8S_ENV
+const K8S_PREFIX = 'cdk8s-on-eks';
+
 /**
  * CDK8S application 
  *    with simple webserver k8s nodes deployed on AWS EKS,
@@ -11,18 +17,17 @@ import { KubeDeployment, KubeService, IntOrString } from './imports/k8s';
  * 
  * Author: ProductiveAnalytics
  */
-export class MyChart extends Chart {
+export class MyCdk8sChart extends Chart {
 
   constructor(scope: Construct, id: string, props: ChartProps = { }) {
     super(scope, id, props);
 
     // Refer: https://hub.docker.com/r/paulbouwer/hello-kubernetes/
     const DOCKER_IMG_VERSION = '1.10.1';
-    const PREFIX = 'cdk8s-ts-on-eks';
-    const label = { app: PREFIX }
+    const label = (props && props.labels) ? props.labels : { app: K8S_PREFIX }
 
     // define resources here
-    const CDK_K8S_SERVICE_ID = (PREFIX + '-svc')
+    const CDK_K8S_SERVICE_ID = (K8S_PREFIX + '-svc')
     new KubeService(this, CDK_K8S_SERVICE_ID, {
       spec: {
         type: 'LoadBalancer',
@@ -31,7 +36,7 @@ export class MyChart extends Chart {
       }
     })
 
-    const CDK_K8S_DEPLOYMENT_ID = (PREFIX + '-deployment')
+    const CDK_K8S_DEPLOYMENT_ID = (K8S_PREFIX + '-deployment')
     new KubeDeployment(this, CDK_K8S_DEPLOYMENT_ID, {
       spec: {
         selector: {
@@ -55,6 +60,27 @@ export class MyChart extends Chart {
   }
 }
 
-const app = new App();
-new MyChart(app, 'typescript');
+console.log('[DEBUG] ENV='+ K8S_PREFIX)
+console.log('[DEBUG] NAMESPACE='+ K8S_NAMESPACE)
+
+const app = new App( {
+    outdir: 'dist'
+  }
+);
+
+const cdk8s_chart:Chart = new MyCdk8sChart(app, 'k8s-typescript', {
+    labels: {
+      app: K8S_PREFIX,
+      environment: K8S_ENV,
+      language: 'typescript'
+    },
+    // Create k8s namespace in advance
+    //    kubectl create namespace cdk8s-eks-sbx
+    //    OR
+    //    kubectl apply -f properties/namespace_cdk8s-eks-sbx.json
+    namespace: K8S_NAMESPACE
+  }
+);
 app.synth();
+
+console.log('[DEBUG] Deployed K8S '+ cdk8s_chart.toJson())
