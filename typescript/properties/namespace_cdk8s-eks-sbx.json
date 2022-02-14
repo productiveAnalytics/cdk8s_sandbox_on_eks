@@ -1,0 +1,11 @@
+{
+    "apiVersion": "v1",
+    "kind": "Namespace",
+    "metadata": {
+      "name": "cdk8s-eks-sbx",
+      "labels": {
+        "name": "cdk8s-eks-sbx"
+      }
+    }
+  }
+  
